@@ -1,978 +1,261 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Absensi NFC</title>
+    <title>Konfigurasi Absensi</title>
+    <script>
+      async function loadWiFiList() {
+        let response = await fetch("/scanWiFi");
+        let ssids = await response.json();
+        let select = document.getElementById("ssidSelect");
+        select.innerHTML = "";
+        let emptyOption = document.createElement("option");
+        emptyOption.value = "";
+        emptyOption.text = "-- Pilih SSID --";
+        emptyOption.disabled = true;
+        emptyOption.selected = true;
+        select.appendChild(emptyOption);
+
+        ssids.forEach((ssid) => {
+          let option = document.createElement("option");
+          option.value = ssid;
+          option.text = ssid;
+          select.appendChild(option);
+        });
+      }
+
+      function toggleStaticConfig() {
+        const mode = document.getElementById("ipModeSelect").value;
+        const staticConfigDiv = document.getElementById("staticConfig");
+        if (mode === "Static") {
+          staticConfigDiv.style.display = "block";
+        } else {
+          staticConfigDiv.style.display = "none";
+          document.getElementById("ipAddress").value = "";
+          document.getElementById("gateway").value = "";
+          document.getElementById("subnetMask").value = "";
+        }
+      }
+      window.onload = () => {
+        loadWiFiList();
+        toggleStaticConfig();
+        document
+          .getElementById("ipModeSelect")
+          .addEventListener("change", toggleStaticConfig);
+      };
+    </script>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
-        color: #383938;
-      }
-
-      h1,
-      h2,
-      h3,
-      h4,
-      p {
-        margin-bottom: 10px;
-      }
-
-      a {
-        text-decoration: none;
-        color: inherit;
-      }
-
-      .login-box {
-        width: 300px;
-        padding: 40px;
-        background-color: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        margin: 100px auto;
-      }
-
-      .title-login {
-        font-size: 24px;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      form {
-        display: flex;
-        flex-direction: column;
-      }
-
-      label {
-        font-size: 14px;
-        margin-bottom: 5px;
-      }
-
-      input {
-        padding: 10px;
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
-
-      button {
-        background-color: #0e7a42;
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
-
-      button:hover {
-        background-color: #2d9e6d;
-      }
-
-      .error-message {
-        color: red;
-        font-size: 12px;
-        text-align: center;
-        margin-top: 10px;
-      }
-
-      .sidebar-container {
-        display: flex;
-        width: 100%;
-        min-height: 100vh;
-      }
-
-      .sidebar {
-        background-color: #0e7a42;
-        width: 250px;
-        padding: 20px;
-        color: white;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .sidebar h2 {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-
-      .sidebar ul {
-        list-style: none;
-        padding: 0;
-      }
-
-      .sidebar li {
-        margin: 15px 0;
-      }
-
-      .sidebar li a {
-        color: white;
-        font-size: 18px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-
-      .sidebar li a:hover {
-        background-color: #383938;
-        padding: 5px;
-        border-radius: 4px;
-      }
-
-      .main-content {
-        flex-grow: 1;
-        padding: 20px;
-        background-color: #f4f4f4;
-      }
-
-      .title-home,
-      .title-wifi,
-      .title-data,
-      .title-backup,
-      .title-restore,
-      .title-restart {
-        color: #0e7a42;
-        margin-bottom: 20px;
-      }
-
-      input[type="text"],
-      input[type="password"],
-      input[type="checkbox"] {
-        width: 100%;
-      }
-
-      input[type="checkbox"] {
-        width: auto;
-      }
-
-      form div {
-        margin-bottom: 15px;
-      }
-
-      button[type="submit"],
-      button[type="button"],
-      button[type="backup"],
-      button[type="restore"],
-      button[type="restart"],
-      button[type="submit1"],
-      button[type="button1"],
-      button[type="submit2"],
-      button[type="button2"] {
-        background-color: #0e7a42;
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-
-      button[type="submit"]:hover,
-      button[type="backup"]:hover,
-      button[type="restore"]:hover,
-      button[type="restart"]:hover,
-      button[type="button"]:hover,
-      button[type="submit1"]:hover,
-      button[type="button1"]:hover,
-      button[type="submit2"]:hover,
-      button[type="button2"]:hover {
-        background-color: #2d9e6d;
-      }
-
-      .wifi-page,
-      .rfid-page,
-      .home-page,
-      .backup-page,
-      .restore-page,
-      .restart-page {
+      .hidden {
         display: none;
       }
-
-      .home-page,
-      .wifi-page {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-
-      th,
-      td {
-        padding: 12px;
-        text-align: left;
-        border: 1px solid #ddd;
-      }
-
-      th {
-        background-color: #0e7a42;
-        color: white;
-      }
-
-      tr:hover {
-        background-color: #f1f1f1;
-      }
-
-      .search-box {
+      .flex {
         display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
       }
-
-      .search-box input {
-        padding: 10px;
-        width: 80%;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-      }
-
-      .search-box button {
-        padding: 10px 15px;
-        background-color: #0e7a42;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
-
-      .search-box button:hover {
-        background-color: #2d9e6d;
-      }
-
-      #log-form {
-        display: flex;
-        flex-direction: column;
-      }
-
-      #log-form input {
-        margin-bottom: 10px;
-        padding: 10px;
-      }
-
-      #log-form button {
-        width: auto;
-        align-self: flex-start;
-      }
-
-      #download-btn {
-        background-color: #0e7a42;
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-
-      #download-btn:hover {
-        background-color: #2d9e6d;
-      }
-
-      .form-group {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-      }
-
-      .labell {
-        font-size: 14px;
-        font-weight: bold;
-        width: 40%;
-      }
-
-      .value {
-        font-size: 16px;
-        font-weight: normal;
-        text-align: left;
-        width: 100%;
-      }
-
-      .modal {
-        padding: 40px;
-        background-color: rgba(11, 11, 11, 0);
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      .justify-center {
         justify-content: center;
+      }
+      .items-center {
         align-items: center;
-        left: 0;
-        top: 0;
+      }
+      .h-screen {
+        height: 100vh;
+      }
+      .bg-gray-50 {
+        background-color: #f9fafb;
+      }
+      .bg-white {
+        background-color: #ffffff;
+      }
+      .p-8 {
+        padding: 2rem;
+      }
+      .rounded-lg {
+        border-radius: 0.5rem;
+      }
+      .shadow-lg {
+        box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+      }
+      .w-96 {
+        width: 24rem;
+      }
+      .text-2xl {
+        font-size: 1.5rem;
+      }
+      .font-semibold {
+        font-weight: 600;
+      }
+      .text-gray-800 {
+        color: #1f2937;
+      }
+      .mb-4 {
+        margin-bottom: 1rem;
+      }
+      .text-sm {
+        font-size: 0.875rem;
+      }
+      .font-medium {
+        font-weight: 500;
+      }
+      .text-gray-700 {
+        color: #4b5563;
+      }
+      .block {
+        display: block;
+      }
+      .w-full {
         width: 100%;
-        height: 100%;
-        display: none;
-        position: fixed;
       }
-
-      .modal-content {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        position: relative;
-        box-sizing: border-box;
+      .px-3 {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
       }
-
-      .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
+      .py-2 {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
       }
-
-      .close:hover,
-      .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
+      .border {
+        border-width: 1px;
+      }
+      .border-gray-300 {
+        border-color: #d1d5db;
+      }
+      .rounded-md {
+        border-radius: 0.375rem;
+      }
+      .focus\:outline-none:focus {
+        outline: none;
+      }
+      .focus\:ring-2:focus {
+        ring-width: 2px;
+      }
+      .focus\:ring-green-500:focus {
+        ring-color: #10b981;
+      }
+      .text-red-500 {
+        color: #ef4444;
+      }
+      .flex {
+        display: flex;
+      }
+      .justify-end {
+        justify-content: flex-end;
+      }
+      .bg-green-600 {
+        background-color: #16a34a;
+      }
+      .text-white {
+        color: white;
+      }
+      .rounded-md {
+        border-radius: 0.375rem;
+      }
+      .hover\:bg-green-700:hover {
+        background-color: #15803d;
       }
     </style>
   </head>
-  <body>
-    <!-- Login Page -->
-    <div id="login-page" class="login-box">
-      <h2 class="title-login">Login</h2>
-      <form id="login-form">
-        <label for="username">Username:</label>
-        <input
-          type="text"
-          id="usernamelogin"
-          name="usernamelogin"
-          required
-        /><br />
-
-        <label for="passwordlogin">Password:</label>
-        <input
-          type="password"
-          id="passwordlogin"
-          name="passwordlogin"
-          required
-        /><br />
-        <button class="button-login" type="submit">Login</button>
-      </form>
-      <p id="error-message" class="error-message"></p>
-    </div>
-
-    <!-- sidebar -->
-    <div id="sidebar-page" class="sidebar-container" style="display: none">
-      <div id="sidebar" class="sidebar">
-        <h2>Menu</h2>
-        <ul>
-          <li><a href="#" id="home-link">Home</a></li>
-          <li><a href="#" id="wifi-link">Set WiFi</a></li>
-          <li><a href="#" id="rfid-link">Set RFID</a></li>
-          <li><a href="#" id="backup-link">Backup & Restore</a></li>
-          <li><a href="#" id="logout-link">Logout</a></li>
-        </ul>
-      </div>
-      <!-- Main Page -->
-      <div id="main-content">
-        <!-- Home Page -->
-        <div id="home-page" class="home-page">
-          <h1 class="title-home">Welcome</h1>
-          <form>
-            <div class="form-group">
-              <label class="labell" for="device-id">Device ID:</label>
-              <span id="device-id" class="value">%DEVICE_ID%</span>
-            </div>
-            <div class="form-group">
-              <label class="labell" for="nilaissid">SSID:</label>
-              <span id="nilaissid" class="value">Absensi %DEVICE_ID%</span>
-            </div>
-            <div class="form-group">
-              <label class="labell" for="wifi-connection"
-                >Wifi Yang Sedang Terhubung:</label
-              >
-              <span id="wifi-connection" class="value">%WIFI_CONNECTION%</span>
-            </div>
-          </form>
-        </div>
-
-        <!-- WiFi Set Page -->
-        <div id="wifi-page" class="wifi-page" style="display: none">
-          <h1 class="title-wifi">WiFi Settings</h1>
-          <form id="wifiForm">
-            <div>
-              <label class="labell" for="wifi-mode">Wi-Fi Mode:</label><br />
-              <input type="checkbox" id="ap-mode" name="wifi-mode" value="AP" />
-              <label for="ap-mode">Access Point</label><br />
-              <input
-                type="checkbox"
-                id="client-mode"
-                name="wifi-mode"
-                value="Client"
-                checked
-              />
-              <label for="client-mode">Client</label>
-            </div>
-            <div>
-              <label for="ssid">WiFi SSID:</label>
-              <select name="ssid" id="ssid"></select
-              ><br />
-              <button type="button" id="scan-btn">Start Scan</button><br />
-              <label for="passwordwifi">Password:</label>
-              <input
-                type="password"
-                name="passwordwifi"
-                id="passwordwifi"
-                required
-              /><br />
-
-              <label for="ipMode">IP Mode:</label>
-              <select name="ipMode" id="ipMode">
-                <option value="dynamic">Dynamic (DHCP)</option>
-                <option value="static">Static</option></select
-              ><br />
-            </div>
-
-            <div id="staticIPFields" style="display: none">
-              <label for="staticIp">Static IP:</label>
-              <input
-                type="text"
-                name="staticIp"
-                id="staticIp"
-                placeholder="e.g., 192.168.1.100"
-              /><br />
-              <label for="gateway">Gateway:</label>
-              <input
-                type="text"
-                name="gateway"
-                id="gateway"
-                placeholder="e.g., 192.168.1.1"
-              /><br />
-              <label for="subnet">Subnet:</label>
-              <input
-                type="text"
-                name="subnet"
-                id="subnet"
-                placeholder="e.g., 255.255.255.0"
-              /><br />
-            </div>
-
-            <div>
-              <button type="submit">Save Settings</button>
-            </div>
-          </form>
-
-          <h1>General Setting</h1>
-          <form id="general-setting-form">
-            <label for="newpasswordlogin">Password:</label>
-            <input
-              type="text"
-              name="newpasswordlogin"
-              id="newpasswordlogin"
-              value="%ADMIN_PASSWORD%"
-              required
-            /><br />
-            <div>
-              <button type="submit1">Save Settings</button>
-              <button type="button1" id="restart-btn1">Reset</button>
-            </div>
-          </form>
-          <form>
-            <div class="api">
-              <label for="api">API:</label>
-              <input
-                type="text"
-                id="api"
-                name="api"
-                placeholder="URL atau API"
-                required
-              />
-            </div>
-            <div>
-              <button type="submit2">Save Settings</button>
-              <button type="button2" id="restart-btn2">Restart</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- RFID Set Page -->
-        <div id="rfid-page" class="rfid" style="display: none">
-          <!-- Tabel untuk Menampilkan Data -->
-          <h3>User Data</h3>
-          <table id="user-data-table">
-            <thead>
-              <tr>
-                <th>UID</th>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Department</th>
-                <th>Phone</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Data akan dimasukkan di sini -->
-            </tbody>
-          </table>
-          <button id="add-user-btn">Add User</button>
-
-          <!-- Modal for Adding New User -->
-          <div id="addUserModal" class="modal" style="display: none">
-            <div class="modal-content">
-              <span id="closeModal" class="close">&times;</span>
-              <h3>Add New User</h3>
-              <form id="add-user-form">
-                <label for="newUUID">UID:</label><br />
-                <input
-                  type="text"
-                  name="newUUID"
-                  id="newUUID"
-                  value="%newUUID%"
-                  required
-                /><br />
-                <label for="name">Name:</label><br />
-                <input
-                  type="text"
-                  name="new-name"
-                  id="new-name"
-                  required
-                /><br />
-                <label for="new-position">Position:</label><br />
-                <input
-                  type="text"
-                  name="new-position"
-                  id="new-position"
-                  required
-                /><br />
-                <label for="new-department">Department:</label><br />
-                <input
-                  type="text"
-                  name="new-department"
-                  id="new-department"
-                  required
-                /><br />
-                <label for="new-phone">Phone:</label><br />
-                <input
-                  type="text"
-                  name="new-phone"
-                  id="new-phone"
-                  required
-                /><br />
-                <button class="savenewuser" type="savenewuser">
-                  Save User
-                </button>
-              </form>
-            </div>
+  <body class="bg-gray-50">
+    <div class="flex justify-center items-center h-screen">
+      <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+          Konfigurasi WiFi
+        </h2>
+        <div id="error" class="text-red-500 mb-4"></div>
+        <form method="POST" action="/saveWiFi">
+          <div class="mb-4">
+            SSID:<br />
+            <select id="ssidSelect" name="ssid" required class="rounded-lg">
+              <!-- opsi akan dimasukkan via JavaScript --></select
+            ><br /><br />
           </div>
-        </div>
 
-        <!-- Backup and restore -->
-        <div id="backup-page" class="backup-page" style="display: none">
-          <h1 class="title-backup">Backup</h1>
-          <form>
-            <h4>
-              plase make sure that you have made a backup on regular basis
-            </h4>
-            <button type="button" onclick="window.location.href='/backup'">
-              Backup User Data
-            </button>
-          </form>
-          <h1 class="title-restore">Restore</h1>
-          <form id="restore-form" enctype="multipart/form-data">
-            <h4>
-              plase make sure that you have made a backup on regular basis
-            </h4>
+          <div class="mb-4">
+            <label
+              for="password"
+              class="block text-sm font-semibold text-gray-700 mb-1"
+              >Password</label
+            >
             <input
-              type="file"
-              id="restore-file"
-              name="restore-file"
-              accept=".json"
+              type="password"
+              id="password"
+              name="password"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               required
             />
-            <button type="restore">Restore User Data</button>
-          </form>
-          <h1 class="title-restart">Restart</h1>
-          <form>
-            <h4>
-              plase make sure that you have made a backup on regular basis
-            </h4>
-            <button type="button" onclick="restartDevice()">
-              Restart Device
-            </button>
-          </form>
-        </div>
+          </div>
+
+          <div class="mb-4">
+            <label
+              for="ipModeSelect"
+              class="block text-sm font-semibold text-gray-700 mb-1"
+              >Mode IP</label
+            >
+            <select
+              id="ipModeSelect"
+              name="ipMode"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md"
+              required
+            >
+              <option value="Dynamic" selected>Dynamic (DHCP)</option>
+              <option value="Static">Static</option>
+            </select>
+          </div>
+
+          <div id="staticConfig" style="display: none">
+            <div class="mb-4">
+              <label
+                for="ipAddress"
+                class="block text-sm font-semibold text-gray-700 mb-1"
+                >IP Address</label
+              >
+              <input
+                type="text"
+                id="ipAddress"
+                name="ipAddress"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="e.g. 192.168.1.100"
+              />
+            </div>
+
+            <div class="mb-4">
+              <label
+                for="gateway"
+                class="block text-sm font-semibold text-gray-700 mb-1"
+                >Gateway</label
+              >
+              <input
+                type="text"
+                id="gateway"
+                name="gateway"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="e.g. 192.168.1.1"
+              />
+            </div>
+
+            <div class="mb-4">
+              <label
+                for="subnetMask"
+                class="block text-sm font-semibold text-gray-700 mb-1"
+                >Subnet Mask</label
+              >
+              <input
+                type="text"
+                id="subnetMask"
+                name="subnetMask"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="e.g. 255.255.255.0"
+              />
+            </div>
+          </div>
+
+          <div class="flex rounded-lg">
+            <input
+              type="submit"
+              value="Simpan & Restart"
+              class="bg-green-600 rounded-lg"
+            />
+          </div>
+        </form>
       </div>
     </div>
-
-    <!-- script fungsi menggunakan js -->
-    <script>
-      // fungsi login
-      let isLoggedIn = false;
-      window.onload = function () {
-        if (localStorage.getItem("isLoggedIn") === "true") {
-          isLoggedIn = true;
-          document.getElementById("login-page").style.display = "none";
-          document.getElementById("sidebar-page").style.display = "flex";
-          showPage("home-page");
-        }
-        updateDeviceId();
-      };
-      document.getElementById("login-form").onsubmit = function (event) {
-        event.preventDefault();
-        let usernamelogin = document.getElementById("usernamelogin").value;
-        let passwordlogin = document.getElementById("passwordlogin").value;
-        fetch("/login", {
-          method: "POST",
-          body: new URLSearchParams({
-            username: usernamelogin,
-            password: passwordlogin,
-          }),
-        })
-          .then((response) => response.text())
-          .then((data) => {
-            if (data === "Login Success") {
-              isLoggedIn = true;
-              document.getElementById("login-page").style.display = "none";
-              document.getElementById("sidebar-page").style.display = "flex";
-              document.getElementById("error-message").textContent = "";
-              showPage("home-page");
-            } else {
-              document.getElementById("error-message").textContent = data;
-            }
-          })
-          .catch((error) => {
-            document.getElementById("error-message").textContent =
-              "Error during login!";
-          });
-      };
-
-      // fungsi sidebar
-      function showPage(pageId) {
-        const pages = document.querySelectorAll("#main-content > div");
-        pages.forEach((page) => {
-          if (page.id === pageId) {
-            page.style.display = "block";
-          } else {
-            page.style.display = "none";
-          }
-        });
-      }
-      document
-        .getElementById("home-link")
-        .addEventListener("click", function () {
-          showPage("home-page");
-        });
-      document
-        .getElementById("wifi-link")
-        .addEventListener("click", function () {
-          showPage("wifi-page");
-        });
-      document
-        .getElementById("rfid-link")
-        .addEventListener("click", function () {
-          showPage("rfid-page");
-        });
-      document
-        .getElementById("backup-link")
-        .addEventListener("click", function () {
-          showPage("backup-page");
-        });
-      document
-        .getElementById("logout-link")
-        .addEventListener("click", function (event) {
-          event.preventDefault();
-          localStorage.removeItem("isLoggedIn");
-          document.getElementById("sidebar-page").style.display = "none";
-          document.getElementById("login-page").style.display = "block";
-          document.getElementById("error-message").textContent = "";
-          document.getElementById("usernamelogin").value = "";
-          document.getElementById("passwordlogin").value = "";
-          isLoggedIn = false;
-        });
-
-      //fungsi untuk wifi
-      document.getElementById("ipMode").addEventListener("change", function () {
-        const ipMode = document.getElementById("ipMode").value;
-        const staticIPFields = document.getElementById("staticIPFields");
-        if (ipMode === "static") {
-          staticIPFields.style.display = "block";
-        } else {
-          staticIPFields.style.display = "none";
-        }
-      });
-      document
-        .getElementById("ap-mode")
-        .addEventListener("change", function () {
-          if (this.checked) {
-            document.getElementById("client-mode").checked = false;
-          }
-        });
-      document
-        .getElementById("client-mode")
-        .addEventListener("change", function () {
-          if (this.checked) {
-            document.getElementById("ap-mode").checked = false;
-          }
-        });
-
-      document.getElementById("wifiForm").onsubmit = function (event) {
-        event.preventDefault();
-        let ssid = document.getElementById("ssid").value;
-        let password = document.getElementById("password").value;
-        let ipMode = document.getElementById("ipMode").value;
-        let staticIp = document.getElementById("staticIp").value;
-        let gateway = document.getElementById("gateway").value;
-        let subnet = document.getElementById("subnet").value;
-        let xhr = new XMLHttpRequest();
-        xhr.open("POST", "/submit", true);
-        xhr.setRequestHeader(
-          "Content-Type",
-          "application/x-www-form-urlencoded"
-        );
-        xhr.send(
-          "ssid=" +
-            ssid +
-            "&password=" +
-            password +
-            "&ipMode=" +
-            ipMode +
-            "&staticIp=" +
-            staticIp +
-            "&gateway=" +
-            gateway +
-            "&subnet=" +
-            subnet
-        );
-        xhr.onload = function () {
-          if (xhr.status === 200) {
-            console.log("WiFi Connected successfully");
-          } else {
-            console.log("WiFi connection failed");
-          }
-        };
-      };
-      function loadAvailableWiFi() {
-        let xhr = new XMLHttpRequest();
-        xhr.open("GET", "/scan_wifi", true);
-        xhr.onload = function () {
-          if (xhr.status === 200) {
-            let wifiNetworks = JSON.parse(xhr.responseText);
-            let ssidSelect = document.getElementById("ssid");
-            ssidSelect.innerHTML = "";
-            if (wifiNetworks.length > 0) {
-              wifiNetworks.forEach(function (network) {
-                let option = document.createElement("option");
-                option.value = network;
-                option.textContent = network;
-                ssidSelect.appendChild(option);
-              });
-            } else {
-              let option = document.createElement("option");
-              option.value = "";
-              option.textContent = "No networks found";
-              ssidSelect.appendChild(option);
-            }
-          }
-        };
-        xhr.send();
-      }
-      document
-        .getElementById("scan-btn")
-        .addEventListener("click", function () {
-          loadAvailableWiFi();
-        });
-
-      // fungsi untuk genral setting
-      document.getElementById("general-setting-form").onsubmit = function (
-        event
-      ) {
-        event.preventDefault();
-        let newPasswordlogin =
-          document.getElementById("newpasswordlogin").value;
-        fetch("/save-settings", {
-          method: "POST",
-          body: new URLSearchParams({
-            newPasswordlogin: newPasswordlogin,
-          }),
-        })
-          .then((response) => response.text())
-          .then((data) => {
-            alert(data);
-          })
-          .catch((error) => {
-            alert("Error during save!");
-          });
-      };
-
-      document
-        .getElementById("restart-btn1")
-        .addEventListener("click", function (event) {
-          event.preventDefault();
-          fetch("/reset-settings", {
-            method: "POST",
-          })
-            .then((response) => response.text())
-            .then((data) => {
-              alert(data);
-              location.reload();
-            })
-            .catch((error) => {
-              alert("Error during reset!");
-            });
-        });
-
-      // Function to open the modal when the "Add User" button is clicked
-      document
-        .getElementById("add-user-btn")
-        .addEventListener("click", function () {
-          document.getElementById("addUserModal").style.display = "block";
-        });
-
-      document
-        .getElementById("closeModal")
-        .addEventListener("click", function () {
-          document.getElementById("addUserModal").style.display = "none";
-        });
-
-      // Function to close the modal after saving the user
-      document.getElementById("add-user-form").onsubmit = function (event) {
-        event.preventDefault();
-        let uid = document.getElementById("newUUID").value;
-        let name = document.getElementById("new-name").value;
-        let position = document.getElementById("new-position").value;
-        let department = document.getElementById("new-department").value;
-        let phone = document.getElementById("new-phone").value;
-        console.log("New User Added:", {
-          uid,
-          name,
-          position,
-          department,
-          phone,
-        });
-
-        document.getElementById("addUserModal").style.display = "none";
-
-        document.getElementById("add-user-form").reset();
-      };
-
-      document.getElementById("add-user-form").onsubmit = function (event) {
-        event.preventDefault();
-        const formData = new FormData(document.getElementById("add-user-form"));
-        fetch("/save-user", {
-          method: "POST",
-          body: formData,
-        })
-          .then((response) => response.text())
-          .then((data) => {
-            if (data.startsWith("UUID sudah ada")) {
-              alert(data);
-            } else {
-              console.log("User data saved:", data);
-              document.getElementById("addUserModal").style.display = "none";
-              document.getElementById("add-user-form").reset();
-            }
-          })
-          .catch((error) => {
-            console.error("Error during saving user data:", error);
-          });
-      };
-      let isNfcReadingActive = true;
-      // Fungsi untuk membuka modal dan membaca NFC saat tap
-      document
-        .getElementById("add-user-btn")
-        .addEventListener("click", function () {
-          document.getElementById("addUserModal").style.display = "block";
-          updateUUID();
-          isNfcReadingActive = false;
-        });
-      function updateUUID() {
-        fetch("/getUUID")
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.uuid) {
-              document.getElementById("newUUID").value = data.uuid;
-              console.log("UUID yang diterima: " + data.uuid);
-            } else {
-              console.log("UUID tidak ditemukan");
-            }
-          })
-          .catch((error) => {
-            console.error("Error saat mengambil UUID:", error);
-          });
-      }
-
-      // Fungsi untuk membuka modal dan memanggil updateUUID setiap kali NFC ditap
-      document
-        .getElementById("add-user-btn")
-        .addEventListener("click", function () {
-          document.getElementById("addUserModal").style.display = "block";
-          updateUUID();
-        });
-
-      document.addEventListener("DOMContentLoaded", function () {
-        fetchUserData();
-        function fetchUserData() {
-          fetch("/get-user-data")
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.user_data) {
-                console.log("Fetched User Data:", data.user_data);
-                populateUserTable(data.user_data);
-              }
-            })
-            .catch((error) => {
-              console.error("Error fetching user data:", error);
-            });
-        }
-        function populateUserTable(userData) {
-          const tableBody = document
-            .getElementById("user-data-table")
-            .getElementsByTagName("tbody")[0];
-          tableBody.innerHTML = "";
-          const userEntries = userData.split(", ");
-          const user = userEntries.reduce((acc, item, index) => {
-            const [key, value] = item.split(": ");
-            acc[key] = value;
-            return acc;
-          }, {});
-          const row = tableBody.insertRow();
-          const uidCell = row.insertCell(0);
-          const nameCell = row.insertCell(1);
-          const positionCell = row.insertCell(2);
-          const departmentCell = row.insertCell(3);
-          const phoneCell = row.insertCell(4);
-          uidCell.textContent = user["UID"];
-          nameCell.textContent = user["Name"];
-          positionCell.textContent = user["Position"];
-          departmentCell.textContent = user["Department"];
-          phoneCell.textContent = user["Phone"];
-        }
-      });
-
-      document.getElementById("restore-form").onsubmit = function (event) {
-        event.preventDefault();
-        var formData = new FormData();
-        formData.append(
-          "plain",
-          document.getElementById("restore-file").files[0]
-        );
-
-        fetch("/restore", {
-          method: "POST",
-          body: formData,
-        })
-          .then((response) => response.text())
-          .then((data) => alert(data))
-          .catch((error) => alert("Error during restore!"));
-      };
-
-      function restartDevice() {
-        fetch("/reset", { method: "POST" })
-          .then((response) => response.text())
-          .then((data) => alert(data))
-          .catch((error) => alert("Error during reset!"));
-      }
-    </script>
   </body>
 </html>
